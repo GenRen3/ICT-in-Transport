@@ -3,6 +3,8 @@ import pprint as pp
 import numpy as np
 import matplotlib.pyplot as plt
 
+#WEEEEEEEEEEEEEEEE
+
 #Here we set the client
 client = pm.MongoClient('bigdatadb.polito.it', ssl=True,
          authSource = 'carsharing', tlsAllowInvalidCertificates=True)
