@@ -156,7 +156,6 @@ plt.title( "CDF booking/parking duration in "+city+", October 2017", loc='center
 plt.grid(True, which='minor', axis="x")
 plt.show()
 
-
 fig = plt.figure()
 
 park_duration = sorted(park_duration)
