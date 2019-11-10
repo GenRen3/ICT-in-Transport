@@ -122,70 +122,22 @@ for item in permanentPark.aggregate([
     parks+=1
     find_hour(item["init_time"]+time_corrector, parking_list)
 
-# counting element in active booking
-countB=0
-activeB=[0]*24
-for item in activeBook.aggregate([
-    {"$match": # stage 1 of the pipeline
-         {"$and": [{"city":city},  {"init_time": {"$gte":unixtime_init+int(time_corrector)}}, {"init_time": {"$lt":unixtime_fin+int(time_corrector)}}]}
-    },
-    {"$project":{
-        "_id":0,
-        # "hour":{
-        #     "$divide": [{"$subtract":["$init_time", unixtime_init]}, hour] # returns the hour in the day (1,..,24)
-        # },
-        "init_time":1
-    }
-    }
-]):
-    countB += 1
-    find_hour(item["init_time"]+time_corrector, activeB)
-
-# counting element in active parking
-countP=0
-activeP=[0]*24
-for item in activePark.aggregate([
-    {"$match": # stage 1 of the pipeline
-         {"$and": [{"city":city},  {"init_time": {"$gte":unixtime_init+int(time_corrector)}}, {"init_time": {"$lt":unixtime_fin+int(time_corrector)}}]}
-    },
-    {"$project":{
-        "_id":0,
-        # "hour":{
-        #     "$divide": [{"$subtract":["$init_time", unixtime_init]}, hour] # returns the hour in the day (1,..,24)
-        # },
-        "init_time":1,
-    }
-    }
-]):
-    countP += 1
-    find_hour(item["init_time"]+time_corrector, activeP)
-
 
 totale =[]
-for elementP, elementB, acP, acB in zip(parking_list, booking_list, activeP, activeB):
-    tot = elementB+elementP+acB+acP
-    totale.append(tot)
-
-totale1=[]
 for elementP, elementB in zip(parking_list, booking_list):
     tot = elementB+elementP
-    totale1.append(tot)
-print(totale)
-
-parking_list_perc = []
-i = 0
-for element in parking_list:
-    x = element/totale[i] * 100
-    parking_list_perc.append(x)
-    i+=1
-
+    totale.append(tot)
 
 booking_list_perc = []
-i = 0
-for element in booking_list:
-    x = element / totale[i] * 100
-    booking_list_perc.append(x)
-    i+=1
+parking_list_perc = []
+
+for elementP, elementB,i in zip(parking_list, booking_list, range(len(booking_list))):
+    p = elementP/totale[i] * 100
+    b = elementB / totale[i] * 100
+    booking_list_perc.append(b)
+    parking_list_perc.append(p)
+  
+
 
 z = min(min(parking_list_perc), min(booking_list_perc))
 s = max(max(parking_list_perc), max(booking_list_perc))

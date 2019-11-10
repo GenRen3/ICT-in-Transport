@@ -133,8 +133,6 @@ for item in activePark.aggregate([
     countP += 1
     find_hour(item["init_time"]+time_corrector, activeP)
 
-print("ciaoooooooo")
-print(countP)
 
 totale =[]
 for elementP, elementB, acP, acB in zip(parking_list, booking_list, activeP, activeB):
@@ -145,23 +143,19 @@ totale1=[]
 for elementP, elementB in zip(parking_list, booking_list):
     tot = elementB+elementP
     totale1.append(tot)
-print(totale1)
-print(totale)
+
+print("considering only permanent collections:     ", totale1)
+print("considering also active booking and parking:", totale)
 
 parking_list_perc = []
-i = 0
-for element in parking_list:
-    x = element/totale[i] * 100
-    parking_list_perc.append(x)
-    i+=1
-
-
 booking_list_perc = []
-i = 0
-for element in booking_list:
-    x = element / totale[i] * 100
-    booking_list_perc.append(x)
-    i+=1
+
+for elementP, elementB, i in zip(parking_list, booking_list, range(len(booking_list))):
+    p = elementP / totale[i] * 100
+    b = elementB / totale[i] * 100
+    booking_list_perc.append(b)
+    parking_list_perc.append(p)
+
 
 z = min(min(parking_list_perc), min(booking_list_perc))
 s = max(max(parking_list_perc), max(booking_list_perc))
