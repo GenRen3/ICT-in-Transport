@@ -6,6 +6,7 @@ from pprint import pprint
 import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime
+import os
 
 
 # configuration
@@ -29,7 +30,7 @@ ict_enjoy_PermanentBook = db['ictts_enjoy_PermanentBookings']
 
 
 # ------------aggregate rentals per hour of the day; plot # booked/parked cars (or %) per hour versus time of day------2
-# filter: 10 october 2017
+
 import time
 import datetime
 ini = datetime.date(2017,10,1)
@@ -59,7 +60,6 @@ booking_list=[0]*24
 parking_list = [0]*24
 books = 0
 
-
 for item in permanentBook.aggregate([
     {"$match": # stage 1 of the pipeline
          {"$and": [{"city":city},  {"init_time": {"$gte":unixtime_init+int(time_corrector)}}, {"init_time": {"$lt":unixtime_fin+int(time_corrector)}}]}
@@ -71,14 +71,14 @@ for item in permanentBook.aggregate([
             "$subtract": ["$final_time", "$init_time"] # returns the duration of rental
         },
         "moved": {  # outlier: did the car actually moved? (change positon)
-            {"$ne":[{"$arrayElemAt": [{"$final_address"}, {"$initial_address"}]}]}
+            "$strcasecmp": ["$final_address", "$initial_address"] # if not moved, returns 0
         },
     }},
     {"$match":{
-        "moved": True,
+        "moved": {"$ne": 0},
         "duration":{
             "$gt": THshortBook,
-            "$le":THlongBook
+            "$lt":THlongBook
         }
     }},
 ]):
@@ -99,14 +99,14 @@ for item in permanentPark.aggregate([
             "$subtract": ["$final_time", "$init_time"] # returns the duration of rental
         },
         "moved": {  # outlier: did the car actually moved? (change positon)
-            {"$ne":[{"$arrayElemAt": ["$final_address",0]}, {"$arrayElemAt": ["$initial_address",1]}]}
+            "$strcasecmp": ["$final_address", "$initial_address"] # returns 0 if the car moved
         },
     }},
     {"$match":{
-        "moved": True,
+        # "moved": {"$ne": 0},
         "duration":{
             "$gt": THshortPark,
-            "$le":THlongPark
+            "$lt":THlongPark
         }
     }},
 ]):
@@ -114,47 +114,47 @@ for item in permanentPark.aggregate([
     find_hour(item["init_time"]+time_corrector, parking_list)
 
 
-totale =[]
-for elementP, elementB in zip(parking_list, booking_list):
-    tot = elementB+elementP
-    totale.append(tot)
+notCleanBooking_list=[0]*24
+notCleanParking_list=[0]*24
+for item in permanentBook.aggregate([
+    {"$match": # stage 1 of the pipeline
+         {"$and": [{"city":city},  {"init_time": {"$gte":unixtime_init+int(time_corrector)}}, {"init_time": {"$lt":unixtime_fin+time_corrector}}]}
+    },
+    {"$project":{
+        "_id":0,
+        "init_time":1
+    }
+    }
+]):
+    find_hour(item["init_time"]+time_corrector, notCleanBooking_list)
 
-booking_list_perc = []
-parking_list_perc = []
+for item in permanentPark.aggregate([
+    {"$match": # stage 1 of the pipeline
+         {"$and": [{"city":city},  {"init_time": {"$gte":unixtime_init+int(time_corrector)}}, {"init_time": {"$lt":unixtime_fin+int(time_corrector)}}]}
+    },
+    {"$project":{
+        "_id":0,
 
-for elementP, elementB,i in zip(parking_list, booking_list, range(len(booking_list))):
-    p = elementP/totale[i] * 100
-    b = elementB / totale[i] * 100
-    booking_list_perc.append(b)
-    parking_list_perc.append(p)
-  
+        "init_time":1
+    }
+    }
+]):
+    find_hour(item["init_time"]+time_corrector, notCleanParking_list)
 
 
-z = min(min(parking_list_perc), min(booking_list_perc))
-s = max(max(parking_list_perc), max(booking_list_perc))
-
+path = "./"
 fig = plt.figure()
-plt.plot(range(24), booking_list_perc, label="Booking during the day")
-plt.plot(range(24), parking_list_perc, label="Parking during the day")
-#plt.plot(range(24), totale, label="tot", color="red")
-plt.legend()
-plt.title("Filtered Rentals in a day in "+city+" October 2017")
+plt.plot(range(24), booking_list, label="Cleaned books", color="blue", alpha="0.5")
+plt.plot(range(24), notCleanBooking_list, label="not cleaned books", color="blue",alpha="0.5",  linestyle="-.")
+plt.plot(range(24), parking_list, label="Cleaned parks", color="green", alpha="0.5")
+plt.plot(range(24), notCleanParking_list, label="not cleaned parks", color="green", linestyle="-.", alpha="0.5")
+plt.title("Rentals in a day in "+city+" October 2017")
 plt.grid(True, which='both')
-plt.xlabel("hour in the day")
+plt.xlabel("Hour in the day [hr]")
 plt.xticks(np.arange(24))
-plt.ylabel("% of cars")
-
-# this is to write values in the vertex of the plot
-# i = 0
-# for elementB, elementP in zip(booking_list_perc, parking_list_perc):
-#     plt.annotate(round(elementB, 1), (i, booking_list_perc[i]))
-#     plt.annotate(round(elementP,1), (i, parking_list_perc[i]))
-#     i+=1
-
-plt.show()
-
+plt.ylabel("Total # of cars")
+plt.legend()
+#plt.show()
 city= city.replace(" ", "")
-fig.savefig('/Users/Ciaramella/ICT-Transport-Laboratories/ICT-in-Transport/hourDay'+city+'FILTERED.png')
-
-
+fig.savefig(''+city+'FILTERED.png')
 

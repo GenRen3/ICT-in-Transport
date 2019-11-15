@@ -63,15 +63,10 @@ for item in permanentBook.aggregate([
     },
     {"$project":{
         "_id":0,
-
-        # "hour":{
-        #     "$divide": [{"$subtract":["$init_time", unixtime_init]}, hour] # returns the hour in the day (1,..,24)
-        # },
         "init_time":1
     }
     }
 ]):
-    #book.append(item["hour"])
     books+=1
     find_hour(item["init_time"]+time_corrector, booking_list)
 
@@ -82,77 +77,28 @@ for item in permanentPark.aggregate([
     },
     {"$project":{
         "_id":0,
-        # "hour":{
-        #     "$divide": [{"$subtract":["$init_time", unixtime_init]}, hour] # returns the hour in the day (1,..,24)
-        # },
+
         "init_time":1
     }
     }
 ]):
-    #book.append(item["hour"])
     parks+=1
     find_hour(item["init_time"]+time_corrector, parking_list)
 
-# counting element in active booking
-countB=0
-activeB=[0]*24
-for item in activeBook.aggregate([
-    {"$match": # stage 1 of the pipeline
-         {"$and": [{"city":city},  {"init_time": {"$gte":unixtime_init+int(time_corrector)}}, {"init_time": {"$lt":unixtime_fin+int(time_corrector)}}]}
-    },
-    {"$project":{
-        "_id":0,
-        # "hour":{
-        #     "$divide": [{"$subtract":["$init_time", unixtime_init]}, hour] # returns the hour in the day (1,..,24)
-        # },
-        "init_time":1
-    }
-    }
-]):
-    countB += 1
-    find_hour(item["init_time"]+time_corrector, activeB)
 
-# counting element in active parking
-countP=0
-activeP=[0]*24
-for item in activePark.aggregate([
-    {"$match": # stage 1 of the pipeline
-         {"$and": [{"city":city},  {"init_time": {"$gte":unixtime_init+int(time_corrector)}}, {"init_time": {"$lt":unixtime_fin+int(time_corrector)}}]}
-    },
-    {"$project":{
-        "_id":0,
-        # "hour":{
-        #     "$divide": [{"$subtract":["$init_time", unixtime_init]}, hour] # returns the hour in the day (1,..,24)
-        # },
-        "init_time":1
-    }
-    }
-]):
-    countP += 1
-    find_hour(item["init_time"]+time_corrector, activeP)
+# totale =[]
+# for elementP, elementB in zip(parking_list, booking_list):
+#     tot = elementB+elementP
+#     totale.append(tot)
 
+parking_list_perc = parking_list
+booking_list_perc = booking_list
 
-totale =[]
-for elementP, elementB, acP, acB in zip(parking_list, booking_list, activeP, activeB):
-    tot = elementB+elementP+acB+acP
-    totale.append(tot)
-
-totale1=[]
-for elementP, elementB in zip(parking_list, booking_list):
-    tot = elementB+elementP
-    totale1.append(tot)
-
-print("considering only permanent collections:     ", totale1)
-print("considering also active booking and parking:", totale)
-
-parking_list_perc = []
-booking_list_perc = []
-
-for elementP, elementB, i in zip(parking_list, booking_list, range(len(booking_list))):
-    p = elementP / totale[i] * 100
-    b = elementB / totale[i] * 100
-    booking_list_perc.append(b)
-    parking_list_perc.append(p)
+# for elementP, elementB, i in zip(parking_list, booking_list, range(len(booking_list))):
+#     p = elementP / totale[i] * 100
+#     b = elementB / totale[i] * 100
+#     booking_list_perc.append(b)
+#     parking_list_perc.append(p)
 
 
 z = min(min(parking_list_perc), min(booking_list_perc))
@@ -165,10 +111,10 @@ plt.plot(range(24), parking_list_perc, label="Parking during the day")
 plt.legend()
 plt.title("Rentals in a day in "+city+" October 2017")
 plt.grid(True, which='both')
-plt.xlabel("hour in the day")
+plt.xlabel("Hour in the day")
 plt.xticks(np.arange(24))
-plt.yticks(np.arange(z, s , 2.0))
-plt.ylabel("% of cars")
+#plt.yticks(np.arange(z, s , 2.0))
+plt.ylabel("Total # cars")
 
 # this is to write values in the vertex of the plot
 # i = 0
@@ -180,7 +126,7 @@ plt.ylabel("% of cars")
 plt.show()
 
 city= city.replace(" ", "")
-fig.savefig('/Users/Ciaramella/ICT-Transport-Laboratories/ICT-in-Transport/hourDay'+city+'.png')
+fig.savefig('./hourDay'+city+'.png')
 
 
 
