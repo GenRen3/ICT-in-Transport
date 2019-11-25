@@ -175,3 +175,5 @@ plt.show()
 city= city.replace(" ", "")
 figWeek.savefig("/images"+city+'Weeks.pdf')
 fig.savefig("/images"+city+'.pdf')
+
+print("hello")
