@@ -3,6 +3,7 @@ import pandas as pd
 import shapefile as shp
 import matplotlib.pyplot as plt
 import seaborn as sns
+import os
 
 sns.set(style="whitegrid", palette="pastel", color_codes=True)
 sns.mpl.rc("figure", figsize=(10,6))
